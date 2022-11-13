@@ -16,6 +16,46 @@
 
 ## Installation
 
+### Homebrew (OS X or Linux)
+
+1. Install the tap
+
+```sh
+brew tap attriaayush/ghostie
+```
+
+1. Install `ghostie`
+
+```sh
+brew install ghostie
+```
+
+### Uninstalling with Homebrew
+
+1. Uninstall `ghostie`
+
+```sh
+brew uninstall ghostie
+```
+
+1. Uninstall the tap
+
+```sh
+brew untap attriaayush/ghostie
+```
+
+### Install manually from Release
+
+1. [Download the latest release for your platform](https://github.com/attriaayush/ghostie/releases)
+1. Install to a location in your $PATH
+
+### Install manually from source
+
+1. [Ensure Rust is installed](https://www.rust-lang.org/tools/install)
+1. Clone this repo and run `cd ghostie`
+1. Run `cargo install --path .`
+1. Ensure `~/.cargo/bin` is in your `$PATH`
+
 ## Usage
 
 Simply run `ghostie` and see the list of things that Ghostie supports.
