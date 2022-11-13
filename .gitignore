@@ -1,0 +1,10 @@
+build/
+.bin/
+
+terminal-ui/terminal-ui
+
+*/**.pem
+*/mkcert/
+
+target/
+!/**/src/**/target/
