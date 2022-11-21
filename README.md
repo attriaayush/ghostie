@@ -9,8 +9,7 @@
 - Runs as background process, fetching new github notifications in a 48h rolling
     window.
 - Polls every 1 minute and uses SQLite to persist local cache of notifications.
-- Issues desktop notification (MacOS only for now) when new notifications
-    are received.
+- Issues desktop notification when new notifications are received.
 - View notifications in your terminal and opens them in your default browser when
     selected.
 
