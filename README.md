@@ -58,7 +58,8 @@ brew untap attriaayush/ghostie
 
 ## Usage
 
-Simply run `ghostie` and see the list of things that Ghostie supports.
+- Create a [Github PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) with `notifications` as permission.
+- Simply run `ghostie` and see the list of things that Ghostie supports.
 
 **Note: To view the notifications using `ghostie view` ensure `ghostie` is running
 as a background process.**
