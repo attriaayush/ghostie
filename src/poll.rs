@@ -51,7 +51,8 @@ async fn poll_notifications() {
 
     let count = notifications.len();
     if count > 0 {
-        platform::notification::send(&format!("{} new notifications", count), Duration::from_secs(3));
+        let notification = platform::notification::NotificationManager::new();
+        notification.send(&format!("{} new notifications", count), Duration::from_secs(3));
     }
 
     info!(format!("Found {} new notifications", count));
