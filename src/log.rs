@@ -1,6 +1,7 @@
 use std::fs::{self, File};
 
 use anyhow::Result;
+use regex::Regex;
 
 pub struct Logger {
     pub stdout_file: String,
@@ -32,13 +33,34 @@ impl Logger {
     }
 
     pub fn display_stdout(&self) {
-        let stderr_results = Self::read_file(&self.stderr_file);
-        let stdout_results = Self::read_file(&self.stdout_file);
+        let re = Regex::new(r"\[(.*?)\]").unwrap();
+        let capture_brackets = Regex::new("\\[|\\]").unwrap();
 
-        if stderr_results.is_empty() {
-            println!("{}", stdout_results);
-        } else {
-            println!("{}", stderr_results);
+        let all_logs = format!(
+            "{}\n{}",
+            Self::read_file(&self.stderr_file).trim(),
+            Self::read_file(&self.stdout_file).trim()
+        );
+
+        let mut logs: Vec<_> = all_logs
+            .split('\n')
+            .map(|s| {
+                if re.is_match(s) {
+                    let timestamp = re.captures(s).unwrap().get(0).map_or("", |m| m.as_str());
+                    return (
+                        chrono::DateTime::parse_from_rfc2822(&capture_brackets.replace_all(timestamp, ""))
+                            .unwrap()
+                            .with_timezone(&chrono::Utc),
+                        s,
+                    );
+                }
+
+                (chrono::offset::Utc::now(), s)
+            })
+            .collect();
+        logs.sort_by(|a, b| a.0.cmp(&b.0));
+        for log in logs.iter() {
+            println!("{}", log.1)
         }
     }
 }
@@ -47,6 +69,13 @@ impl Logger {
 macro_rules! info {
   ($($lvl:tt)*) => {
     println!("[{}][INFO] {}", chrono::offset::Local::now().to_rfc2822(), $($lvl)*)
+  };
+}
+
+#[macro_export]
+macro_rules! warn {
+  ($($lvl:tt)*) => {
+    println!("[{}][WARN] {}", chrono::offset::Local::now().to_rfc2822(), $($lvl)*)
   };
 }
 
