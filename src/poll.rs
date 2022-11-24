@@ -31,7 +31,8 @@ async fn fetch_notifications() -> Vec<Notification> {
 }
 
 async fn poll_notifications() {
-    let cache = Cache::new();
+    let mut cache = Cache::new();
+    cache.delete_all_before(chrono::offset::Utc::now());
 
     let mut cached_notifications_map = HashMap::new();
     for notification in cache.read_all().unwrap().iter() {

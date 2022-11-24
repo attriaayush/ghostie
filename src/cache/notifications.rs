@@ -67,6 +67,14 @@ impl Cache {
         })
     }
 
+    pub fn delete_all_before(&mut self, timestamp: chrono::DateTime<chrono::Utc>) {
+        let notifications = self.read_all().unwrap();
+        notifications
+            .iter()
+            .filter(|n| chrono::DateTime::parse_from_rfc2822(&n.updated_at).unwrap() < timestamp)
+            .for_each(|notification| self.delete_by_id(&notification.id).unwrap());
+    }
+
     pub fn delete_all(&mut self) -> Result<()> {
         self.instance.execute("DELETE FROM ghostie", [])?;
         Ok(())
@@ -164,7 +172,7 @@ mod tests {
                 kind: String::from("pull_request"),
                 subject: String::from("I need review"),
                 url: String::from("https://github.com/"),
-                updated_at: String::from("9:00am"),
+                updated_at: String::from("Mon, 21 Nov 2022 10:59:42 +0000"),
             }
         }
 
@@ -180,6 +188,19 @@ mod tests {
     }
 
     const _ID: &str = "12";
+
+    #[test]
+    #[serial]
+    fn delete_by_timestamp() {
+        clear_cache();
+        let mut instance = Cache::new();
+        instance.write(&Fake::a_notification(_ID.to_owned())).unwrap();
+
+        instance.delete_all_before(chrono::offset::Utc::now());
+
+        let notification = instance.read_by_id(_ID).is_ok();
+        println!("{}", notification);
+    }
 
     #[test]
     #[serial]
