@@ -87,11 +87,12 @@ fn start_app<B: Backend>(
 }
 
 fn open_url_in_browser(app: &App<Notification>) {
-    let current = app.items.current();
-    if open::that(current.url.clone()).is_err() {
-        println!("Could not open url: {} in a browser", current.url)
-    };
-    mark_as_read(&current.id);
+    if let Some(current) = app.items.current() {
+        if open::that(current.url.clone()).is_err() {
+            println!("Could not open url: {} in a browser", current.url)
+        };
+        mark_as_read(&current.id);
+    }
 }
 
 fn help_block() -> Block<'static> {

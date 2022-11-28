@@ -45,7 +45,11 @@ impl<T> StatefulList<T> {
         self.state.select(None);
     }
 
-    pub fn current(&self) -> &T {
-        &self.items[self.state.selected().unwrap()]
+    pub fn current(&self) -> Option<&T> {
+        if let Some(i) = self.state.selected() {
+            Some(&self.items[i])
+        } else {
+            None
+        }
     }
 }
