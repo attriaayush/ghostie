@@ -45,7 +45,7 @@ impl<T> StatefulList<T> {
         self.state.select(None);
     }
 
-    pub fn current(&self) -> &T {
-        &self.items[self.state.selected().unwrap()]
+    pub fn current(&self) -> Option<&T> {
+        self.state.selected().map(|i| &self.items[i])
     }
 }
