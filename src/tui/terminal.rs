@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::Result;
+use async_std::task;
 use chrono::DateTime;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
@@ -75,6 +76,7 @@ fn start_app<B: Backend>(
                     KeyCode::Left => app.items.unselect(),
                     KeyCode::Down => app.items.next(),
                     KeyCode::Up => app.items.previous(),
+                    KeyCode::Char('m') => mark_notification_as_read(&app),
                     KeyCode::Enter => open_url_in_browser(&app),
                     _ => {}
                 }
@@ -83,6 +85,15 @@ fn start_app<B: Backend>(
         if last_tick.elapsed() >= tick_rate {
             last_tick = Instant::now();
         }
+    }
+}
+
+fn mark_notification_as_read(app: &App<Notification>) {
+    if let Some(current) = app.items.current() {
+        task::block_on(async {
+            crate::poll::mark_notification_as_read(&current.id).await;
+        });
+        mark_as_read(&current.id);
     }
 }
 
@@ -97,7 +108,8 @@ fn open_url_in_browser(app: &App<Notification>) {
 
 fn help_block() -> Block<'static> {
     Block::default().title(Span::styled(
-        "    (↑) scroll up    (↓) scroll down    (q/esc) quit    (enter) open in browser    ".to_string(),
+        "    (m) mark as read    (↑) scroll up    (↓) scroll down    (q/esc) quit    (enter) open in browser    "
+            .to_string(),
         Style::default().add_modifier(Modifier::BOLD).fg(Color::Green),
     ))
 }

@@ -11,13 +11,27 @@ use crate::{
 
 use crate::{error, info};
 
-async fn fetch_notifications() -> Vec<Notification> {
-    let notifications: Vec<Notification> = Github::init_with_token(Credentials::Token(github_token()))
+fn github_instance() -> Github {
+    Github::init_with_token(Credentials::Token(github_token()))
+}
+
+pub async fn mark_notification_as_read(notifcation_id: &str) {
+    github_instance()
         .user_activity()
         .notifications()
-        .list()
+        .builder()
+        .mark_as_read(notifcation_id)
+        .await
+        .unwrap();
+}
+
+async fn fetch_notifications() -> Vec<Notification> {
+    let notifications: Vec<Notification> = github_instance()
+        .user_activity()
+        .notifications()
+        .builder()
         .since(chrono::Utc::now() - chrono::Duration::days(2))
-        .fetch()
+        .list()
         .await
         .unwrap_or_else(|error| {
             error!("\n");
