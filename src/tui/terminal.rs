@@ -16,7 +16,7 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders, List, ListItem},
+    widgets::{Block, Borders},
     Frame, Terminal,
 };
 
@@ -25,6 +25,7 @@ use crate::cache::{
     read::{mark_as_read, read_all_notifications},
 };
 use crate::tui::app::TerminalApp as App;
+use super::list::{List, ListItem};
 
 pub fn open() -> Result<()> {
     terminal()
@@ -163,6 +164,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App<Notification>) {
         .highlight_style(Style::default().bg(Color::DarkGray))
         .highlight_symbol("👉");
 
-    f.render_stateful_widget(items, chunks[0], &mut app.items.state);
+    f.render_stateful_widget::<List>(items, chunks[0], &mut app.items.state);
     f.render_widget(help_block(), chunks[1]);
 }
