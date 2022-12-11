@@ -20,12 +20,12 @@ use tui::{
     Frame, Terminal,
 };
 
+use super::list::{List, ListItem};
 use crate::cache::{
     notifications::Notification,
     read::{mark_as_read, read_all_notifications},
 };
 use crate::tui::app::TerminalApp as App;
-use super::list::{List, ListItem};
 
 pub fn open() -> Result<()> {
     terminal()
@@ -77,7 +77,7 @@ fn start_app<B: Backend>(
                     KeyCode::Left => app.items.unselect(),
                     KeyCode::Down => app.items.next(),
                     KeyCode::Up => app.items.previous(),
-                    KeyCode::Char('m') => mark_notification_as_read(&app),
+                    KeyCode::Char('m') => mark_notification_as_read(&mut app),
                     KeyCode::Enter => open_url_in_browser(&app),
                     _ => {}
                 }
@@ -89,12 +89,13 @@ fn start_app<B: Backend>(
     }
 }
 
-fn mark_notification_as_read(app: &App<Notification>) {
+fn mark_notification_as_read(app: &mut App<Notification>) {
     if let Some(current) = app.items.current() {
-        task::block_on(async {
+        /* task::block_on(async {
             crate::poll::mark_notification_as_read(&current.id).await;
         });
-        mark_as_read(&current.id);
+        mark_as_read(&current.id); */
+        app.items.mark();
     }
 }
 

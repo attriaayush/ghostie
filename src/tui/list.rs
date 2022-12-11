@@ -56,6 +56,7 @@ impl<'a> List<'a> {
             if height + item.height() > max_height {
                 break;
             }
+
             height += item.height();
             end += 1;
         }
@@ -85,6 +86,7 @@ impl<'a> List<'a> {
 pub struct ListState {
     offset: usize,
     selected: Option<usize>,
+    pub marked: bool,
 }
 
 impl ListState {
@@ -96,6 +98,12 @@ impl ListState {
         self.selected = index;
         if index.is_none() {
             self.offset = 0;
+        }
+    }
+    pub fn mark(&mut self, index: Option<usize>) {
+        self.selected = index;
+        if index.is_some() {
+            self.marked = true;
         }
     }
 }
@@ -180,21 +188,21 @@ impl<'a> StatefulWidget for List<'a> {
             buf.set_style(area, item_style);
 
             let is_selected = state.selected.map(|s| s == i).unwrap_or(false);
+            let is_marked = state.marked;
             for (j, line) in item.content.lines.iter().enumerate() {
-                // if the item is selected, we need to display the hightlight symbol:
-                // - either for the first line of the item only,
-                // - or for each line of the item if the appropriate option is set
                 let symbol = if is_selected && (j == 0 || self.repeat_highlight_symbol) {
                     highlight_symbol
                 } else {
                     &blank_symbol
                 };
+
                 let (elem_x, max_element_width) = if has_selection {
                     let (elem_x, _) = buf.set_stringn(x, y + j as u16, symbol, list_area.width as usize, item_style);
                     (elem_x, (list_area.width - (elem_x - x)) as u16)
                 } else {
                     (x, list_area.width)
                 };
+
                 buf.set_spans(elem_x, y + j as u16, line, max_element_width as u16);
             }
             if is_selected {
@@ -251,6 +259,11 @@ impl<T> StatefulList<T> {
 
     pub fn current(&self) -> Option<&T> {
         self.state.selected().map(|i| &self.items[i])
+    }
+
+    pub fn mark(&mut self) {
+        self.state.mark(self.state.selected());
+        self.next();
     }
 }
 
