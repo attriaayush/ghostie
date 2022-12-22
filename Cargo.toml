@@ -18,7 +18,10 @@ dirs = "4.0.0"
 clap = { version = "3.2.17", features = ["derive"] }
 tui = "0.19"
 crossterm = "0.25"
-chrono = { version = "0.4.19", default-features = false, features = ["serde", "clock"] }
+chrono = { version = "0.4.19", default-features = false, features = [
+  "serde",
+  "clock",
+] }
 open = "3.0.2"
 daemonize = "0.4.1"
 sysinfo = "0.26.6"

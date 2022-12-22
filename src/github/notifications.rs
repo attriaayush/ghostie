@@ -13,7 +13,7 @@ impl Notifications {
         Self { github }
     }
 
-    pub fn list(&self) -> NotificationsBuilder {
+    pub fn builder(&self) -> NotificationsBuilder {
         NotificationsBuilder::new(&self.github)
     }
 }
@@ -47,10 +47,18 @@ impl<'client> NotificationsBuilder<'client> {
         self
     }
 
-    pub async fn fetch(self) -> Result<Vec<Notification>, NotificationError> {
+    pub async fn list(self) -> Result<Vec<Notification>, NotificationError> {
         self.github
             .get::<Vec<Notification>, NotificationsBuilder>("notifications", Some(&self))
             .await
+    }
+
+    pub async fn mark_as_read(self, notification_id: &str) -> anyhow::Result<()> {
+        self.github
+            .patch(&format!("notifications/threads/{}", notification_id), Some(&self))
+            .await?;
+
+        Ok(())
     }
 }
 

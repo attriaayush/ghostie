@@ -48,4 +48,11 @@ impl<T> StatefulList<T> {
     pub fn current(&self) -> Option<&T> {
         self.state.selected().map(|i| &self.items[i])
     }
+
+    pub fn mark(&mut self) {
+        let i = self.state.selected();
+        if let Some(index) = i {
+            self.items.remove(index);
+        };
+    }
 }

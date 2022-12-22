@@ -74,6 +74,11 @@ impl Github {
         req.send()
     }
 
+    pub async fn patch<P: Serialize + ?Sized>(&self, uri: &str, params: Option<&P>) -> Result<()> {
+        self.request(Method::PATCH, self.host.clone() + uri, params).await?;
+        Ok(())
+    }
+
     pub async fn get<T: DeserializeOwned, P: Serialize + ?Sized>(
         &self,
         uri: &str,
