@@ -2,8 +2,6 @@
 
 > Github notifications in your terminal. Available on MacOS and Linux.
 
-![](./docs/demo.gif)
-
 ## Features
 
 - Runs as background process, fetching new github notifications in a 48h rolling
