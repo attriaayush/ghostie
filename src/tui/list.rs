@@ -86,7 +86,6 @@ impl<'a> List<'a> {
 pub struct ListState {
     offset: usize,
     selected: Option<usize>,
-    pub marked: bool,
 }
 
 impl ListState {
@@ -98,12 +97,6 @@ impl ListState {
         self.selected = index;
         if index.is_none() {
             self.offset = 0;
-        }
-    }
-    pub fn mark(&mut self, index: Option<usize>) {
-        self.selected = index;
-        if index.is_some() {
-            self.marked = true;
         }
     }
 }
@@ -188,7 +181,7 @@ impl<'a> StatefulWidget for List<'a> {
             buf.set_style(area, item_style);
 
             let is_selected = state.selected.map(|s| s == i).unwrap_or(false);
-            let is_marked = state.marked;
+
             for (j, line) in item.content.lines.iter().enumerate() {
                 let symbol = if is_selected && (j == 0 || self.repeat_highlight_symbol) {
                     highlight_symbol
@@ -262,8 +255,10 @@ impl<T> StatefulList<T> {
     }
 
     pub fn mark(&mut self) {
-        self.state.mark(self.state.selected());
-        self.next();
+        let i = self.state.selected();
+        if let Some(index) = i {
+            self.items.remove(index);
+        };
     }
 }
 
