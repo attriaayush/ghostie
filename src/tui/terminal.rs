@@ -16,11 +16,10 @@ use tui::{
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Span, Spans},
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, List, ListItem},
     Frame, Terminal,
 };
 
-use super::list::{List, ListItem};
 use crate::cache::{
     notifications::Notification,
     read::{mark_as_read, read_all_notifications},
@@ -91,10 +90,10 @@ fn start_app<B: Backend>(
 
 fn mark_notification_as_read(app: &mut App<Notification>) {
     if let Some(current) = app.items.current() {
-        /* task::block_on(async {
+        task::block_on(async {
             crate::poll::mark_notification_as_read(&current.id).await;
         });
-        mark_as_read(&current.id); */
+        mark_as_read(&current.id);
         app.items.mark();
     }
 }
@@ -165,6 +164,6 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App<Notification>) {
         .highlight_style(Style::default().bg(Color::DarkGray))
         .highlight_symbol("👉");
 
-    f.render_stateful_widget::<List>(items, chunks[0], &mut app.items.state);
+    f.render_stateful_widget(items, chunks[0], &mut app.items.state);
     f.render_widget(help_block(), chunks[1]);
 }

@@ -864,7 +864,6 @@ dependencies = [
  "sysinfo",
  "thiserror",
  "tui",
- "unicode-width",
  "which",
 ]
 
