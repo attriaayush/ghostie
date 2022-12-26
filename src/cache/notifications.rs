@@ -71,7 +71,7 @@ impl Cache {
         let notifications = self.read_all().unwrap();
         notifications
             .iter()
-            .filter(|n| chrono::DateTime::parse_from_rfc2822(&n.updated_at).unwrap() < timestamp)
+            .filter(|n| chrono::DateTime::parse_from_rfc3339(&n.updated_at).unwrap() < timestamp)
             .for_each(|notification| self.delete_by_id(&notification.id).unwrap());
     }
 
@@ -172,7 +172,7 @@ mod tests {
                 kind: String::from("pull_request"),
                 subject: String::from("I need review"),
                 url: String::from("https://github.com/"),
-                updated_at: String::from("Mon, 21 Nov 2022 10:59:42 +0000"),
+                updated_at: String::from("2022-12-12T18:52:24Z"),
             }
         }
 

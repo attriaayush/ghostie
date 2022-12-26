@@ -15,6 +15,10 @@ fn github_instance() -> Github {
     Github::init_with_token(Credentials::Token(github_token()))
 }
 
+fn rolling_window() -> chrono::DateTime<chrono::Utc> {
+    chrono::Utc::now() - chrono::Duration::days(2)
+}
+
 pub async fn mark_notification_as_read(notifcation_id: &str) {
     github_instance()
         .user_activity()
@@ -30,7 +34,7 @@ async fn fetch_notifications() -> Vec<Notification> {
         .user_activity()
         .notifications()
         .builder()
-        .since(chrono::Utc::now() - chrono::Duration::days(2))
+        .since(rolling_window())
         .list()
         .await
         .unwrap_or_else(|error| {
@@ -46,7 +50,7 @@ async fn fetch_notifications() -> Vec<Notification> {
 
 async fn poll_notifications() {
     let mut cache = Cache::new();
-    cache.delete_all_before(chrono::offset::Utc::now());
+    cache.delete_all_before(rolling_window());
 
     let mut cached_notifications_map = HashMap::new();
     for notification in cache.read_all().unwrap().iter() {
