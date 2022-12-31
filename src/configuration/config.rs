@@ -22,6 +22,6 @@ lazy_static::lazy_static! {
 
 impl Config {
     pub fn init() -> &'static Config {
-        &*CONFIG
+        &CONFIG
     }
 }
