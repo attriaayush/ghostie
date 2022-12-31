@@ -1,9 +1,9 @@
 pub mod cache;
 pub mod cli;
-pub mod config;
 pub mod daemon;
 pub mod github;
 pub mod log;
 pub mod platform;
 pub mod poll;
 pub mod tui;
+pub mod configuration;

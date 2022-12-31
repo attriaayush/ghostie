@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rusqlite::Connection;
 
-use crate::config::create_dir;
+use crate::configuration::config::Config;
 extern crate dirs;
 
 pub struct Database {
@@ -24,7 +24,7 @@ impl Database {
     }
 
     fn create_connection() -> Connection {
-        let db_file = create_dir().join("notifications.db");
+        let db_file = &Config::init().cache_file;
         Connection::open(db_file)
             .unwrap_or_else(|err| panic!("There was an error creating the database connection, error: {}", err))
     }

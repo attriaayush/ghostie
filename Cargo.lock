@@ -852,6 +852,7 @@ dependencies = [
  "dirs",
  "fake",
  "futures",
+ "lazy_static",
  "notify-rust",
  "open",
  "rand",

@@ -32,6 +32,7 @@ reqwest = { version = "0.11.12", features = ["json"] }
 thiserror = "1.0"
 which_crate = { version = "~4.1", package = "which" }
 regex = "1.7"
+lazy_static = "1.4.0"
 
 [dev-dependencies]
 fake = "2.5"

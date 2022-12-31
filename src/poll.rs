@@ -4,7 +4,7 @@ use clokwerk::*;
 
 use crate::{
     cache::{notifications::Notification, Cache},
-    config::github_token,
+    configuration::token::Token,
     github::client::{Credentials, Github},
     platform,
 };
@@ -12,7 +12,7 @@ use crate::{
 use crate::{error, info};
 
 fn github_instance() -> Github {
-    Github::init_with_token(Credentials::Token(github_token()))
+    Github::init_with_token(Credentials::Token(Token::get()))
 }
 
 fn rolling_window() -> chrono::DateTime<chrono::Utc> {
