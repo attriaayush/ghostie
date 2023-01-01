@@ -1,4 +1,6 @@
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, io::Write, path::PathBuf};
+
+use opener::open;
 
 pub struct AdditionalConfig {
     polling_interval_minutes: u32,
@@ -17,7 +19,7 @@ impl Default for AdditionalConfig {
 }
 
 impl AdditionalConfig {
-    fn load(config_file: PathBuf) -> AdditionalConfig {
+    fn load(config_file: &PathBuf) -> AdditionalConfig {
         let mut map = HashMap::new();
         let config_content = fs::read_to_string(config_file).unwrap();
 
@@ -66,6 +68,7 @@ impl AdditionalConfig {
 pub struct Config {
     pub cache_file: PathBuf,
     pub token_file: PathBuf,
+    pub config_file: PathBuf,
     pub additional_config: AdditionalConfig,
 }
 
@@ -83,12 +86,13 @@ lazy_static::lazy_static! {
         let additional_config_path = home_dir.join("ghostie.config");
         let mut additional_config = AdditionalConfig::default();
         if additional_config_path.exists() {
-          additional_config = AdditionalConfig::load(additional_config_path);
+          additional_config = AdditionalConfig::load(&additional_config_path);
         }
 
         Config {
           cache_file: home_dir.join("notifications.db"),
           token_file: home_dir.join("github.token"),
+          config_file: additional_config_path,
           additional_config,
         }
     };
@@ -97,5 +101,27 @@ lazy_static::lazy_static! {
 impl Config {
     pub fn read() -> &'static Self {
         &CONFIG
+    }
+
+    pub fn edit_additional_config() {
+        let config_file = &CONFIG.config_file;
+        if !config_file.exists() {
+            Write::write_all(
+                &mut fs::File::create(config_file).unwrap(),
+                r#"// Frequency of polling notifications from Github in minutes
+polling_interval_minutes=1
+
+// Number of days to be used as polling window
+polling_window_days=2
+
+// OS specific notifications/alerts
+enable_os_notifications=true"#
+                    .to_string()
+                    .as_bytes(),
+            )
+            .unwrap();
+        }
+
+        open(config_file).unwrap();
     }
 }

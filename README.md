@@ -72,6 +72,7 @@ USAGE:
 
 SUBCOMMANDS:
     clear-logs    Clear logs from the background process
+    configure     Override default configurations
     count -C      Query the count of unread github notifications
     logs -L       Show logs from the background process
     prune -P      Prune all notifications from the local cache
