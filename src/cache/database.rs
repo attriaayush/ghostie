@@ -24,7 +24,7 @@ impl Database {
     }
 
     fn create_connection() -> Connection {
-        let db_file = &Config::init().cache_file;
+        let db_file = &Config::read().cache_file;
         Connection::open(db_file)
             .unwrap_or_else(|err| panic!("There was an error creating the database connection, error: {}", err))
     }

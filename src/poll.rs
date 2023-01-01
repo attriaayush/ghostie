@@ -4,7 +4,7 @@ use clokwerk::*;
 
 use crate::{
     cache::{notifications::Notification, Cache},
-    configuration::token::Token,
+    configuration::{config::Config, token::Token},
     github::client::{Credentials, Github},
     platform,
 };
@@ -16,7 +16,7 @@ fn github_instance() -> Github {
 }
 
 fn rolling_window() -> chrono::DateTime<chrono::Utc> {
-    chrono::Utc::now() - chrono::Duration::days(2)
+    chrono::Utc::now() - chrono::Duration::days(Config::read().additional_config.get_polling_window_days().into())
 }
 
 pub async fn mark_notification_as_read(notifcation_id: &str) {
@@ -69,7 +69,7 @@ async fn poll_notifications() {
     });
 
     let count = notifications.len();
-    if count > 0 {
+    if count > 0 && Config::read().additional_config.get_enable_os_notifications() {
         let notification = platform::notification::NotificationManager::new();
         notification.send(format!("{} new notifications", count), Duration::from_secs(3));
     }
@@ -79,9 +79,16 @@ async fn poll_notifications() {
 
 pub async fn start() {
     let mut scheduler = AsyncScheduler::new();
-    scheduler.every(1.minutes()).run(|| async {
-        poll_notifications().await;
-    });
+    scheduler
+        .every(
+            Config::read()
+                .additional_config
+                .get_polling_interval_minutes()
+                .minutes(),
+        )
+        .run(|| async {
+            poll_notifications().await;
+        });
 
     loop {
         scheduler.run_pending().await;
