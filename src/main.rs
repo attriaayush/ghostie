@@ -2,7 +2,7 @@ use std::process::exit;
 
 use dialoguer::{theme::ColorfulTheme, Confirm, Password};
 
-use ghostie::{cli, config};
+use ghostie::{cli, configuration::token::Token};
 
 fn prompt_token_flow() {
     let github_token = Password::with_theme(&ColorfulTheme::default())
@@ -18,7 +18,7 @@ fn prompt_token_flow() {
         .unwrap()
     {
         Some(true) => {
-            config::write_token_to_file(github_token);
+            Token::set(github_token);
             println!("Successfully persisted token in ~/.ghostie/github.token")
         }
         Some(false) => {
@@ -30,7 +30,7 @@ fn prompt_token_flow() {
 }
 
 fn main() {
-    if !config::is_token_set() {
+    if !Token::is_set() {
         prompt_token_flow();
     }
 

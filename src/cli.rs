@@ -1,3 +1,4 @@
+use crate::configuration::config::Config;
 use crate::tui;
 use clap::Command;
 
@@ -35,6 +36,7 @@ pub fn init() {
                 .about("Prune all notifications from the local cache"),
         )
         .subcommand(Command::new("clear-logs").about("Clear logs from the background process"))
+        .subcommand(Command::new("configure").about("Override default configurations"))
         .get_matches();
 
     match matches.subcommand() {
@@ -47,6 +49,7 @@ pub fn init() {
         Some(("stop", _)) => Daemon::stop_daemon(),
         Some(("logs", _)) => Daemon::show_logs(),
         Some(("clear-logs", _)) => Daemon::clear_logs(),
+        Some(("configure", _)) => Config::edit_additional_config(),
         Some(("view", _)) => {
             tui::terminal::open().unwrap();
         }

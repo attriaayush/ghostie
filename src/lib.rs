@@ -1,6 +1,6 @@
 pub mod cache;
 pub mod cli;
-pub mod config;
+pub mod configuration;
 pub mod daemon;
 pub mod github;
 pub mod log;

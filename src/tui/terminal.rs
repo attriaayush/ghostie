@@ -20,11 +20,14 @@ use tui::{
     Frame, Terminal,
 };
 
-use crate::cache::{
-    notifications::Notification,
-    read::{mark_as_read, read_all_notifications},
-};
 use crate::tui::app::TerminalApp as App;
+use crate::{
+    cache::{
+        notifications::Notification,
+        read::{mark_as_read, read_all_notifications},
+    },
+    configuration::config::Config,
+};
 
 pub fn open() -> Result<()> {
     terminal()
@@ -121,7 +124,7 @@ fn parse_into_duration(updated_at: &str) -> String {
         .with_timezone(&chrono::Utc);
     let duration = chrono::offset::Utc::now() - current_timestamp;
 
-    if duration.num_hours() <= 48 {
+    if duration.num_days() <= Config::read().additional_config.get_polling_interval_minutes().into() {
         return format!("{} hours", duration.num_hours());
     }
 

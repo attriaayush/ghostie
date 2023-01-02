@@ -63,20 +63,8 @@ brew untap attriaayush/ghostie
 **Note: To view the notifications using `ghostie view` ensure `ghostie` is running
 as a background process.**
 
-```
-ghostie
-manage your github notifications in terminal
+### Overriding default configuration
 
-USAGE:
-    ghostie <SUBCOMMAND>
-
-SUBCOMMANDS:
-    clear-logs    Clear logs from the background process
-    count -C      Query the count of unread github notifications
-    logs -L       Show logs from the background process
-    prune -P      Prune all notifications from the local cache
-    start         Run ghostie as a background process
-    stop          Stop ghostie as a background process
-    view -V       Open UI to manage github notifications
-```
+- Simply run `ghostie configure` and edit the default configuration
+- Restart the background process by running `ghostie stop && ghostie start`
 
