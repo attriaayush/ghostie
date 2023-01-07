@@ -17,7 +17,7 @@ impl NotificationManager {
     pub fn new() -> Self {
         Self {
             #[cfg(target_os = "linux")]
-            send: match which_crate::which("send") {
+            send: match which_crate::which("notify-send") {
                 Ok(path) => Some(path),
                 Err(_) => None,
             },
