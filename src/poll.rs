@@ -83,8 +83,8 @@ pub async fn start() {
         .every(
             Config::read()
                 .additional_config
-                .get_polling_interval_minutes()
-                .minutes(),
+                .get_polling_interval_seconds()
+                .seconds(),
         )
         .run(|| async {
             poll_notifications().await;

@@ -124,7 +124,7 @@ fn parse_into_duration(updated_at: &str) -> String {
         .with_timezone(&chrono::Utc);
     let duration = chrono::offset::Utc::now() - current_timestamp;
 
-    if duration.num_days() <= Config::read().additional_config.get_polling_interval_minutes().into() {
+    if duration.num_days() <= Config::read().additional_config.get_polling_interval_seconds().into() {
         return format!("{} hours", duration.num_hours());
     }
 
