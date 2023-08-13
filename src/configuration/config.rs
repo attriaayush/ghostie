@@ -3,7 +3,7 @@ use std::{collections::HashMap, fs, io::Write, path::PathBuf};
 use opener::open;
 
 pub struct AdditionalConfig {
-    polling_interval_minutes: u32,
+    polling_interval_seconds: u32,
     polling_window_days: u32,
     enable_os_notifications: bool,
 }
@@ -11,7 +11,7 @@ pub struct AdditionalConfig {
 impl Default for AdditionalConfig {
     fn default() -> Self {
         Self {
-            polling_interval_minutes: 1,
+            polling_interval_seconds: 60,
             polling_window_days: 2,
             enable_os_notifications: true,
         }
@@ -32,9 +32,9 @@ impl AdditionalConfig {
         }
 
         AdditionalConfig {
-            polling_interval_minutes: map
-                .get("polling_interval_minutes")
-                .unwrap_or(&"1".to_string())
+            polling_interval_seconds: map
+                .get("polling_interval_seconds")
+                .unwrap_or(&"60".to_string())
                 .parse::<u32>()
                 .unwrap(),
 
@@ -56,8 +56,8 @@ impl AdditionalConfig {
         self.polling_window_days
     }
 
-    pub fn get_polling_interval_minutes(&self) -> u32 {
-        self.polling_interval_minutes
+    pub fn get_polling_interval_seconds(&self) -> u32 {
+        self.polling_interval_seconds
     }
 
     pub fn get_enable_os_notifications(&self) -> bool {
@@ -108,8 +108,8 @@ impl Config {
         if !config_file.exists() {
             Write::write_all(
                 &mut fs::File::create(config_file).unwrap(),
-                r#"// Frequency of polling notifications from Github in minutes
-polling_interval_minutes=1
+                r#"// Frequency of polling notifications from Github in seconds
+polling_interval_seconds=60
 
 // Number of days to be used as polling window
 polling_window_days=2
