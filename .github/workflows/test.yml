@@ -5,35 +5,19 @@ name: Test
 jobs:
   test:
     name: Test Suite
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Cache dependencies
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-dependencies
-        with:
-          path: |
-            ~/.cargo/.crates.toml
-            ~/.cargo/.crates2.json
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            target
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('Cargo.lock') }}
+        uses: Swatinem/rust-cache@v2
 
       - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        continue-on-error: false
-        with:
-          command: test
-
+        run: cargo test

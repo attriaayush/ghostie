@@ -1,11 +1,12 @@
+use std::time::Duration;
+
 use anyhow::Result;
-use futures::Future;
 use reqwest::{
-    header::{ACCEPT, AUTHORIZATION, USER_AGENT},
     Client, Method,
+    header::{ACCEPT, AUTHORIZATION, USER_AGENT},
 };
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use thiserror::Error;
 
 use crate::github::activity::Activity;
@@ -45,7 +46,11 @@ impl Github {
     where
         C: Into<Credentials>,
     {
-        let client = Client::builder().build().unwrap();
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(10))
+            .build()
+            .expect("Failed to build HTTP client");
         Self {
             host: DEFAULT_HOST.to_string(),
             agent: "ghostie".into(),
@@ -54,24 +59,23 @@ impl Github {
         }
     }
 
-    fn request<P: Serialize + ?Sized>(
+    async fn request<P: Serialize + ?Sized>(
         &self,
         method: Method,
         url: String,
         params: Option<&P>,
-    ) -> impl Future<Output = Result<reqwest::Response, reqwest::Error>> {
-        let instance = self.clone();
-        let mut req = instance.client.request(method, url);
+    ) -> Result<reqwest::Response, reqwest::Error> {
+        let mut req = self.client.request(method, url);
 
         if let Some(params) = params {
             req = req.query(params);
         }
 
-        req = req.header(USER_AGENT, &instance.agent);
+        req = req.header(USER_AGENT, &self.agent);
         req = req.header(ACCEPT, MEDIA_TYPE);
         req = req.header(AUTHORIZATION, self.credentials.bearer_token());
 
-        req.send()
+        req.send().await
     }
 
     pub async fn patch<P: Serialize + ?Sized>(&self, uri: &str, params: Option<&P>) -> Result<()> {

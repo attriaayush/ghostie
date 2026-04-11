@@ -6,7 +6,7 @@ use crate::cache::{delete::prune_all, read::read_all_notifications};
 use crate::daemon::daemonize::Daemon;
 use crate::poll;
 
-pub fn init() {
+pub async fn init() {
     let matches = clap::Command::new("ghostie")
         .about("manage your github notifications in terminal")
         .subcommand_required(true)

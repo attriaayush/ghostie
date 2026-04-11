@@ -4,20 +4,19 @@ use std::{
 };
 
 use anyhow::Result;
-use async_std::task;
 use chrono::DateTime;
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use tui::{
+use ratatui::{
+    Frame, Terminal,
     backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Line, Span},
     widgets::{Block, Borders, List, ListItem},
-    Frame, Terminal,
 };
 
 use crate::cache::{
@@ -90,8 +89,10 @@ fn start_app<B: Backend>(
 
 fn mark_notification_as_read(app: &mut App<Notification>) {
     if let Some(current) = app.items.current() {
-        task::block_on(async {
-            crate::poll::mark_notification_as_read(&current.id).await;
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                crate::poll::mark_notification_as_read(&current.id).await;
+            });
         });
         mark_as_read(&current.id);
         app.items.mark();
@@ -132,13 +133,13 @@ fn parse_into_duration(updated_at: &str) -> String {
     format!("{} days", duration.num_days())
 }
 
-fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App<Notification>) {
+fn ui(f: &mut Frame, app: &mut App<Notification>) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Percentage(90), Constraint::Percentage(10)].as_ref())
+        .constraints([Constraint::Percentage(90), Constraint::Percentage(10)])
         .vertical_margin(5)
         .horizontal_margin(10)
-        .split(f.size());
+        .split(f.area());
 
     let items = &app.items.items;
     let total_notifications = items.len();
@@ -148,13 +149,13 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App<Notification>) {
         .enumerate()
         .map(|(index, n)| {
             let lines = vec![
-                Spans::from(Span::styled(
+                Line::from(Span::styled(
                     format!("({}) [{}] {}", index + 1, n.kind.to_lowercase(), n.subject),
                     Style::default()
                         .add_modifier(Modifier::BOLD)
-                        .fg(Color::Rgb(34, 139, 34)), // Dark Green,
+                        .fg(Color::Rgb(34, 139, 34)),
                 )),
-                Spans::from(format!("{} ⏰ {} ago", n.name, parse_into_duration(&n.updated_at))),
+                Line::from(format!("{} ⏰ {} ago", n.name, parse_into_duration(&n.updated_at))),
             ];
             ListItem::new(lines).style(Style::default().fg(Color::White))
         })

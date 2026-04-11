@@ -15,11 +15,11 @@ pub struct Notification {
 }
 
 fn create_github_url(repo_url: String, subject_url: Option<String>) -> String {
-    if subject_url.is_none() {
+    let Some(url) = subject_url else {
         return repo_url;
-    }
+    };
 
-    let mut html_url = subject_url.unwrap().replace("api.github.com/repos", "github.com");
+    let mut html_url = url.replace("api.github.com/repos", "github.com");
 
     if html_url.contains("/pulls/") {
         html_url = html_url.replace("/pulls/", "/pull/");
@@ -54,25 +54,31 @@ impl Default for Cache {
 
 impl Cache {
     pub fn new() -> Self {
-        let db_client = Database::create().unwrap();
+        let db_client = Database::create().expect("Failed to create database connection");
         Self {
             instance: db_client.connection,
         }
     }
 
     pub fn destroy() -> Result<Self> {
-        let db_client = Database::destroy().unwrap();
+        let db_client = Database::destroy().expect("Failed to destroy database");
         Ok(Self {
             instance: db_client.connection,
         })
     }
 
     pub fn delete_all_before(&mut self, timestamp: chrono::DateTime<chrono::Utc>) {
-        let notifications = self.read_all().unwrap();
+        let notifications = self.read_all().unwrap_or_default();
         notifications
             .iter()
-            .filter(|n| chrono::DateTime::parse_from_rfc3339(&n.updated_at).unwrap() < timestamp)
-            .for_each(|notification| self.delete_by_id(&notification.id).unwrap());
+            .filter(|n| {
+                chrono::DateTime::parse_from_rfc3339(&n.updated_at)
+                    .map(|dt| dt < timestamp)
+                    .unwrap_or(false)
+            })
+            .for_each(|notification| {
+                let _ = self.delete_by_id(&notification.id);
+            });
     }
 
     pub fn delete_all(&mut self) -> Result<()> {
@@ -157,48 +163,44 @@ mod tests {
     use fake::{Fake as Generate, Faker};
     use serial_test::serial;
 
-    struct Fake(Notification);
+    fn fake_notification(id: String) -> Notification {
+        Notification {
+            id,
+            name: String::from("Fake Notification"),
+            repo: String::from("Fake repo"),
+            kind: String::from("pull_request"),
+            subject: String::from("I need review"),
+            url: String::from("https://github.com/"),
+            updated_at: String::from("2022-12-12T18:52:24Z"),
+        }
+    }
+
+    fn fake_notification_list(count: usize) -> Vec<Notification> {
+        let mut notifications = Vec::with_capacity(count);
+
+        for _ in 0..count {
+            let random_string: String = Faker.fake();
+            notifications.push(fake_notification(random_string));
+        }
+        notifications
+    }
 
     fn clear_cache() {
         Cache::destroy().unwrap();
     }
 
-    impl Fake {
-        fn a_notification(id: String) -> Notification {
-            Notification {
-                id,
-                name: String::from("Fake Notification"),
-                repo: String::from("Fake repo"),
-                kind: String::from("pull_request"),
-                subject: String::from("I need review"),
-                url: String::from("https://github.com/"),
-                updated_at: String::from("2022-12-12T18:52:24Z"),
-            }
-        }
-
-        fn list_of_notifications(count: usize) -> Vec<Notification> {
-            let mut notifications = Vec::with_capacity(count);
-
-            for _ in 0..count {
-                let random_string: String = Faker.fake();
-                notifications.push(Fake::a_notification(random_string));
-            }
-            notifications
-        }
-    }
-
-    const _ID: &str = "12";
+    const TEST_ID: &str = "12";
 
     #[test]
     #[serial]
     fn delete_by_timestamp() {
         clear_cache();
         let mut instance = Cache::new();
-        instance.write(&Fake::a_notification(_ID.to_owned())).unwrap();
+        instance.write(&fake_notification(TEST_ID.to_owned())).unwrap();
 
         instance.delete_all_before(chrono::offset::Utc::now());
 
-        let notification = instance.read_by_id(_ID).is_ok();
+        let notification = instance.read_by_id(TEST_ID).is_ok();
         println!("{}", notification);
     }
 
@@ -207,12 +209,12 @@ mod tests {
     fn write_and_read() {
         clear_cache();
         let instance = Cache::new();
-        let write = instance.write(&Fake::a_notification(_ID.to_owned())).is_ok();
+        let write = instance.write(&fake_notification(TEST_ID.to_owned())).is_ok();
 
         assert!(write);
 
-        let notification = instance.read_by_id(_ID).unwrap();
-        assert_eq!(_ID, notification.id);
+        let notification = instance.read_by_id(TEST_ID).unwrap();
+        assert_eq!(TEST_ID, notification.id);
     }
 
     #[test]
@@ -220,12 +222,12 @@ mod tests {
     fn write_and_delete() {
         clear_cache();
         let instance = Cache::new();
-        instance.write(&Fake::a_notification(_ID.to_owned())).unwrap();
+        instance.write(&fake_notification(TEST_ID.to_owned())).unwrap();
 
-        let deleted = instance.delete_by_id(_ID).is_ok();
+        let deleted = instance.delete_by_id(TEST_ID).is_ok();
         assert!(deleted);
 
-        let notification = instance.read_by_id(_ID).is_ok();
+        let notification = instance.read_by_id(TEST_ID).is_ok();
         assert!(!notification);
     }
 
@@ -235,7 +237,7 @@ mod tests {
         clear_cache();
         let count = 5;
         let instance = Cache::new();
-        let write = instance.write_batch(&Fake::list_of_notifications(count)).is_ok();
+        let write = instance.write_batch(&fake_notification_list(count)).is_ok();
         assert!(write);
 
         let notifications = instance.read_all().unwrap();

@@ -44,18 +44,17 @@ impl Logger {
 
         let mut logs: Vec<_> = all_logs
             .split('\n')
-            .map(|s| {
+            .filter_map(|s| {
                 if re.is_match(s) {
-                    let timestamp = re.captures(s).unwrap().get(0).map_or("", |m| m.as_str());
-                    return (
-                        chrono::DateTime::parse_from_rfc2822(&capture_brackets.replace_all(timestamp, ""))
-                            .unwrap()
-                            .with_timezone(&chrono::Utc),
-                        s,
-                    );
+                    let timestamp = re.captures(s)?.get(0).map_or("", |m| m.as_str());
+                    let parsed =
+                        chrono::DateTime::parse_from_rfc2822(&capture_brackets.replace_all(timestamp, "")).ok()?;
+                    Some((parsed.with_timezone(&chrono::Utc), s))
+                } else if !s.is_empty() {
+                    Some((chrono::offset::Utc::now(), s))
+                } else {
+                    None
                 }
-
-                (chrono::offset::Utc::now(), s)
             })
             .collect();
         logs.sort_by(|a, b| a.0.cmp(&b.0));
@@ -63,25 +62,4 @@ impl Logger {
             println!("{}", log.1)
         }
     }
-}
-
-#[macro_export]
-macro_rules! info {
-  ($($lvl:tt)*) => {
-    println!("[{}][INFO] {}", chrono::offset::Local::now().to_rfc2822(), $($lvl)*)
-  };
-}
-
-#[macro_export]
-macro_rules! warn {
-  ($($lvl:tt)*) => {
-    println!("[{}][WARN] {}", chrono::offset::Local::now().to_rfc2822(), $($lvl)*)
-  };
-}
-
-#[macro_export]
-macro_rules! error {
-  ($($lvl:tt)*) => {
-    eprintln!("[{}][ERROR] {}", chrono::offset::Local::now().to_rfc2822(), $($lvl)*)
-  };
 }

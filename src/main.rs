@@ -1,6 +1,7 @@
 use std::process::exit;
 
-use dialoguer::{theme::ColorfulTheme, Confirm, Password};
+use dialoguer::{Confirm, Password, theme::ColorfulTheme};
+use tracing_subscriber::EnvFilter;
 
 use ghostie::{cli, configuration::token::Token};
 
@@ -29,10 +30,15 @@ fn prompt_token_flow() {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
+
     if !Token::is_set() {
         prompt_token_flow();
     }
 
-    cli::init();
+    cli::init().await;
 }
