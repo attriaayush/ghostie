@@ -13,7 +13,7 @@ impl Notifications {
         Self { github }
     }
 
-    pub fn builder(&self) -> NotificationsBuilder {
+    pub fn builder(&self) -> NotificationsBuilder<'_> {
         NotificationsBuilder::new(&self.github)
     }
 }

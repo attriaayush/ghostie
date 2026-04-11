@@ -1,4 +1,4 @@
-use tui::widgets::ListState;
+use ratatui::widgets::ListState;
 
 pub struct StatefulList<T> {
     pub state: ListState,
@@ -14,6 +14,9 @@ impl<T> StatefulList<T> {
     }
 
     pub fn next(&mut self) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
             Some(i) => {
                 if i >= self.items.len() - 1 {
@@ -28,6 +31,9 @@ impl<T> StatefulList<T> {
     }
 
     pub fn previous(&mut self) {
+        if self.items.is_empty() {
+            return;
+        }
         let i = match self.state.selected() {
             Some(i) => {
                 if i == 0 {
@@ -46,13 +52,19 @@ impl<T> StatefulList<T> {
     }
 
     pub fn current(&self) -> Option<&T> {
-        self.state.selected().map(|i| &self.items[i])
+        self.state.selected().and_then(|i| self.items.get(i))
     }
 
     pub fn mark(&mut self) {
-        let i = self.state.selected();
-        if let Some(index) = i {
-            self.items.remove(index);
-        };
+        if let Some(index) = self.state.selected() {
+            if index < self.items.len() {
+                self.items.remove(index);
+                if self.items.is_empty() {
+                    self.state.select(None);
+                } else {
+                    self.state.select(Some(index.min(self.items.len() - 1)));
+                }
+            }
+        }
     }
 }

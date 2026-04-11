@@ -1,4 +1,4 @@
-use crate::cache::{notifications::Notification, Cache};
+use crate::cache::{Cache, notifications::Notification};
 
 pub fn read_all_notifications() -> Vec<Notification> {
     Cache::new().read_all().unwrap()
