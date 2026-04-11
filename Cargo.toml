@@ -26,7 +26,6 @@ chrono = { version = "0.4", default-features = false, features = [
 open = "5"
 daemonize = "0.5"
 sysinfo = "0.33"
-dialoguer = "0.11"
 reqwest = { version = "0.12", features = ["json"] }
 thiserror = "2"
 which = "7"

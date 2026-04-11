@@ -1,44 +1,11 @@
-use std::process::exit;
-
-use dialoguer::{Confirm, Password, theme::ColorfulTheme};
 use tracing_subscriber::EnvFilter;
 
-use ghostie::{cli, configuration::token::Token};
+use ghostie::cli;
 
-fn prompt_token_flow() {
-    let github_token = Password::with_theme(&ColorfulTheme::default())
-        .with_prompt("Github token (no bearer/token prefix)")
-        .allow_empty_password(false)
-        .interact()
-        .unwrap();
-
-    match Confirm::with_theme(&ColorfulTheme::default())
-        .with_prompt("Would you like ghostie to persist the token? (required)")
-        .default(true)
-        .interact_opt()
-        .unwrap()
-    {
-        Some(true) => {
-            Token::set(github_token);
-            println!("Successfully persisted token in ~/.ghostie/github.token")
-        }
-        Some(false) => {
-            eprintln!("ghostie requires the token to be persisted :(");
-            exit(1);
-        }
-        None => unreachable!(),
-    }
-}
-
-#[tokio::main]
-async fn main() {
+fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
-    if !Token::is_set() {
-        prompt_token_flow();
-    }
-
-    cli::init().await;
+    cli::init();
 }

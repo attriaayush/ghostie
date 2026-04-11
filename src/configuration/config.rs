@@ -69,7 +69,6 @@ impl AdditionalConfig {
 
 pub struct Config {
     pub cache_file: PathBuf,
-    pub token_file: PathBuf,
     pub config_file: PathBuf,
     pub additional_config: AdditionalConfig,
 }
@@ -90,7 +89,6 @@ static CONFIG: LazyLock<Config> = LazyLock::new(|| {
 
     Config {
         cache_file: home_dir.join("notifications.db"),
-        token_file: home_dir.join("github.token"),
         config_file: additional_config_path,
         additional_config,
     }
