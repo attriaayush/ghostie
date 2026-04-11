@@ -1,5 +1,5 @@
 use std::{
-    io,
+    io::{self, Stdout},
     time::{Duration, Instant},
 };
 
@@ -12,7 +12,7 @@ use crossterm::{
 };
 use ratatui::{
     Frame, Terminal,
-    backend::{Backend, CrosstermBackend},
+    backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -23,13 +23,9 @@ use crate::cache::{
     notifications::Notification,
     read::{mark_as_read, read_all_notifications},
 };
-use crate::tui::app::TerminalApp as App;
+use crate::tui::list::StatefulList;
 
 pub fn open() -> Result<()> {
-    terminal()
-}
-
-fn terminal() -> Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -42,8 +38,8 @@ fn terminal() -> Result<()> {
     let mut list = read_all_notifications();
     list.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
 
-    let app = App::create_list(list);
-    let res = start_app(&mut terminal, app, tick_rate);
+    let mut app = StatefulList::with_items(list);
+    let res = run_event_loop(&mut terminal, &mut app, tick_rate);
 
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
@@ -56,14 +52,14 @@ fn terminal() -> Result<()> {
     Ok(())
 }
 
-fn start_app<B: Backend>(
-    terminal: &mut Terminal<B>,
-    mut app: App<Notification>,
+fn run_event_loop(
+    terminal: &mut Terminal<CrosstermBackend<Stdout>>,
+    app: &mut StatefulList<Notification>,
     tick_rate: Duration,
 ) -> io::Result<()> {
     let mut last_tick = Instant::now();
     loop {
-        terminal.draw(|f| ui(f, &mut app))?;
+        terminal.draw(|f| ui(f, app))?;
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
@@ -72,11 +68,11 @@ fn start_app<B: Backend>(
             if let Event::Key(key) = event::read()? {
                 match key.code {
                     KeyCode::Char('c') | KeyCode::Char('q') | KeyCode::Esc => return Ok(()),
-                    KeyCode::Left => app.items.unselect(),
-                    KeyCode::Down => app.items.next(),
-                    KeyCode::Up => app.items.previous(),
-                    KeyCode::Char('m') => mark_notification_as_read(&mut app),
-                    KeyCode::Enter => open_url_in_browser(&app),
+                    KeyCode::Left => app.unselect(),
+                    KeyCode::Down => app.next(),
+                    KeyCode::Up => app.previous(),
+                    KeyCode::Char('m') => mark_notification_as_read(app),
+                    KeyCode::Enter => open_url_in_browser(app),
                     _ => {}
                 }
             }
@@ -87,24 +83,29 @@ fn start_app<B: Backend>(
     }
 }
 
-fn mark_notification_as_read(app: &mut App<Notification>) {
-    if let Some(current) = app.items.current() {
-        tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async {
-                crate::poll::mark_notification_as_read(&current.id).await;
-            });
+fn mark_notification_as_read(app: &mut StatefulList<Notification>) {
+    if let Some(current) = app.current() {
+        let id = current.id.clone();
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            crate::poll::mark_notification_as_read(&id).await;
         });
-        mark_as_read(&current.id);
-        app.items.mark();
+        mark_as_read(&id);
+        app.mark();
     }
 }
 
-fn open_url_in_browser(app: &App<Notification>) {
-    if let Some(current) = app.items.current() {
-        if open::that(current.url.clone()).is_err() {
-            println!("Could not open url: {} in a browser", current.url)
+fn open_url_in_browser(app: &mut StatefulList<Notification>) {
+    if let Some(current) = app.current() {
+        let id = current.id.clone();
+        let url = current.url.clone();
+        if open::that(&url).is_err() {
+            println!("Could not open url: {} in a browser", url)
         };
-        mark_as_read(&current.id);
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            crate::poll::mark_notification_as_read(&id).await;
+        });
+        mark_as_read(&id);
+        app.mark();
     }
 }
 
@@ -117,10 +118,10 @@ fn help_block() -> Block<'static> {
 }
 
 fn parse_into_duration(updated_at: &str) -> String {
-    let current_timestamp = DateTime::parse_from_rfc3339(updated_at)
-        .unwrap()
-        .with_timezone(&chrono::Utc);
-    let duration = chrono::offset::Utc::now() - current_timestamp;
+    let Ok(current_timestamp) = DateTime::parse_from_rfc3339(updated_at) else {
+        return "unknown".to_string();
+    };
+    let duration = chrono::offset::Utc::now() - current_timestamp.with_timezone(&chrono::Utc);
     if duration.num_minutes() <= 1 {
         return format!("{} seconds", duration.num_seconds());
     }
@@ -133,7 +134,7 @@ fn parse_into_duration(updated_at: &str) -> String {
     format!("{} days", duration.num_days())
 }
 
-fn ui(f: &mut Frame, app: &mut App<Notification>) {
+fn ui(f: &mut Frame, app: &mut StatefulList<Notification>) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Percentage(90), Constraint::Percentage(10)])
@@ -141,7 +142,7 @@ fn ui(f: &mut Frame, app: &mut App<Notification>) {
         .horizontal_margin(10)
         .split(f.area());
 
-    let items = &app.items.items;
+    let items = &app.items;
     let total_notifications = items.len();
 
     let items: Vec<ListItem> = items
@@ -169,6 +170,6 @@ fn ui(f: &mut Frame, app: &mut App<Notification>) {
         .highlight_style(Style::default().bg(Color::DarkGray))
         .highlight_symbol("👉");
 
-    f.render_stateful_widget(items, chunks[0], &mut app.items.state);
+    f.render_stateful_widget(items, chunks[0], &mut app.state);
     f.render_widget(help_block(), chunks[1]);
 }

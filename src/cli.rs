@@ -11,8 +11,6 @@ pub fn init() {
         .about("manage your github notifications in terminal")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .disable_help_flag(true)
-        .disable_help_subcommand(true)
         .subcommand(
             Command::new("view")
                 .short_flag('V')

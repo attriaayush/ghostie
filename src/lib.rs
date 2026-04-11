@@ -3,7 +3,6 @@ pub mod cli;
 pub mod configuration;
 pub mod daemon;
 pub mod github;
-pub mod log;
 pub mod platform;
 pub mod poll;
 pub mod tui;

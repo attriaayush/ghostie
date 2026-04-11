@@ -9,8 +9,8 @@ use crate::{
     platform,
 };
 
-fn github_instance() -> Github {
-    Github::init_with_token(Credentials::Token(Token::get()))
+fn github_instance(token: &str) -> Github {
+    Github::init_with_token(Credentials::Token(token.to_string()))
 }
 
 fn rolling_window() -> chrono::DateTime<chrono::Utc> {
@@ -18,7 +18,8 @@ fn rolling_window() -> chrono::DateTime<chrono::Utc> {
 }
 
 pub async fn mark_notification_as_read(notifcation_id: &str) {
-    if let Err(e) = github_instance()
+    let token = Token::get();
+    if let Err(e) = github_instance(&token)
         .user_activity()
         .notifications()
         .builder()
@@ -29,8 +30,8 @@ pub async fn mark_notification_as_read(notifcation_id: &str) {
     }
 }
 
-async fn fetch_notifications() -> Option<Vec<Notification>> {
-    match github_instance()
+async fn fetch_notifications(token: &str) -> Option<Vec<Notification>> {
+    match github_instance(token)
         .user_activity()
         .notifications()
         .builder()
@@ -46,13 +47,13 @@ async fn fetch_notifications() -> Option<Vec<Notification>> {
     }
 }
 
-async fn poll_notifications() {
+async fn poll_notifications(token: &str) {
     let mut cache = Cache::new();
     cache.delete_all_before(rolling_window());
 
     let cached_ids: HashSet<String> = cache.read_all().unwrap_or_default().into_iter().map(|n| n.id).collect();
 
-    let Some(fetched) = fetch_notifications().await else {
+    let Some(fetched) = fetch_notifications(token).await else {
         return;
     };
 
@@ -76,11 +77,12 @@ async fn poll_notifications() {
 }
 
 pub async fn start() {
+    let token = Token::get();
     let secs = Config::read().additional_config.polling_interval_seconds;
     let mut interval = tokio::time::interval(Duration::from_secs(secs.into()));
 
     loop {
         interval.tick().await;
-        poll_notifications().await;
+        poll_notifications(&token).await;
     }
 }

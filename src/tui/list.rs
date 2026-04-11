@@ -52,13 +52,19 @@ impl<T> StatefulList<T> {
     }
 
     pub fn current(&self) -> Option<&T> {
-        self.state.selected().map(|i| &self.items[i])
+        self.state.selected().and_then(|i| self.items.get(i))
     }
 
     pub fn mark(&mut self) {
-        let i = self.state.selected();
-        if let Some(index) = i {
-            self.items.remove(index);
-        };
+        if let Some(index) = self.state.selected() {
+            if index < self.items.len() {
+                self.items.remove(index);
+                if self.items.is_empty() {
+                    self.state.select(None);
+                } else {
+                    self.state.select(Some(index.min(self.items.len() - 1)));
+                }
+            }
+        }
     }
 }

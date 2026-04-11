@@ -1,4 +1,4 @@
-use std::{fs, io::Write, path::PathBuf, sync::LazyLock};
+use std::{fs, path::PathBuf, sync::LazyLock};
 
 use serde::{Deserialize, Serialize};
 
@@ -102,15 +102,18 @@ impl Config {
     pub fn edit_additional_config() {
         let config_file = &CONFIG.config_file;
         if !config_file.exists() {
-            let default_config = AdditionalConfig::default();
-            let toml_content = format!(
-                "# Frequency of polling notifications from Github in seconds\npolling_interval_seconds = {}\n\n# Number of days to be used as polling window\npolling_window_days = {}\n\n# OS specific notifications/alerts\nenable_os_notifications = {}\n",
-                default_config.polling_interval_seconds,
-                default_config.polling_window_days,
-                default_config.enable_os_notifications,
-            );
+            let toml_content = "\
+# Frequency of polling notifications from Github in seconds
+polling_interval_seconds = 60
 
-            Write::write_all(&mut fs::File::create(config_file).unwrap(), toml_content.as_bytes()).unwrap();
+# Number of days to be used as polling window
+polling_window_days = 2
+
+# OS specific notifications/alerts
+enable_os_notifications = true
+";
+
+            fs::write(config_file, toml_content).unwrap();
         }
 
         open::that(config_file).unwrap();

@@ -1,3 +1,2 @@
-mod app;
-mod list;
+pub mod list;
 pub mod terminal;

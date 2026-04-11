@@ -107,12 +107,7 @@ impl Cache {
             })
         })?;
 
-        let mut notifications = Vec::<Notification>::new();
-        for notification in notification_iter {
-            notifications.push(notification?)
-        }
-
-        Ok(notifications)
+        notification_iter.collect()
     }
 
     pub fn read_by_id(&self, id: &str) -> Result<Notification> {
@@ -151,7 +146,7 @@ impl Cache {
 
     pub fn write_batch(&self, notifications: &[Notification]) -> Result<()> {
         for notification in notifications.iter() {
-            Self::write(self, notification)?
+            self.write(notification)?
         }
         Ok(())
     }

@@ -35,15 +35,14 @@ impl ProcManager {
 
     fn try_setup(&self) -> Result<()> {
         let pid = self.read_pid_from_file();
-        let status = Self::check_existing_process(pid);
-        if status {
+        if Self::check_existing_process(pid) {
             anyhow::bail!(
                 "The background process is already running, process id: {}",
                 pid.unwrap()
             );
         }
 
-        if !status && self.read_pid_from_file().is_some() {
+        if pid.is_some() {
             fs::remove_file(&self.pid_file)?;
         }
 
